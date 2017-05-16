@@ -398,6 +398,8 @@ function update_neural_net_svg() {
       var outNeuronElems = nn_svg.selectAll("g.output-neuron");
       var hiddenNeuronElems = nn_svg.selectAll("g.hidden-neuron");
 
+      nn_svg.selectAll(".cell_value_one_hot").remove();
+      
           // Number in circle
           inputNeuronElems.append("text")
           .classed("cell_value_one_hot", true)
@@ -492,7 +494,7 @@ function io_arrow_color() {
 
 function erase_input_output_arrows() {
   nn_svg.selectAll(".nn-io-arrow").remove();
-  nn_svg.selectAll(".cell_value_one_hot").remove();
+  // nn_svg.selectAll(".cell_value_one_hot").remove();
 }
 
 // Helper function
@@ -611,25 +613,29 @@ function update_heatmap_svg() {
     .classed("hmap-input-cell", true)
     .classed("hmap-cell", true)
     .append("rect")
-    .attr("x", function (d) {return inputCellBaseX + cellWidth * d['target']})
-    .attr("y", function (d) {return ioCellBaseY + cellHeight * d['source']})
-    .attr("width", cellFillWidth)
-    .attr("height", cellFillHeight);
+      .attr("x", function (d) {return inputCellBaseX + cellWidth * d['target']})
+      .attr("y", function (d) {return ioCellBaseY + cellHeight * d['source']})
+      .attr("width", cellFillWidth)
+      .attr("height", cellFillHeight)
+      .style("stroke-width", function (d) {
+        console.log("stroke-width", d);
+
+        return 0;
+      });
 
     hmap_svg
     .selectAll("g.hmap-input-cell > text").remove();
-
     hmap_svg
     .selectAll("g.hmap-input-cell")
     .append("text")
     .style("font-size","19px")
     .attr("x", function (d) {return inputCellBaseX + cellWidth * d['target'] + 10})
     .attr("y", function (d) {return ioCellBaseY + cellHeight * d['source'] + 50})
-    
     .classed("matrix_number", true)
     .text(function (d) {
       return d.weight.toFixed(3)
     });
+
 
   var outputWeightElems = hmap_svg
     .selectAll("g.hmap-output-cell")
@@ -643,6 +649,20 @@ function update_heatmap_svg() {
     .attr("y", function (d) {return ioCellBaseY + cellHeight * d['target']})
     .attr("width", cellFillWidth)
     .attr("height", cellFillHeight);
+
+
+    hmap_svg
+    .selectAll("g.hmap-output-cell > text").remove();
+    hmap_svg
+    .selectAll("g.hmap-output-cell")
+    .append("text")
+    .style("font-size","19px")
+    .attr("x", function (d) {return outputCellBaseX + cellWidth * d['source'] + 10})
+    .attr("y", function (d) {return ioCellBaseY + cellHeight * d['target'] + 50})
+    .classed("matrix_number", true)
+    .text(function (d) {
+      return d.weight.toFixed(3)
+    });
 
   hmap_svg
     .selectAll("g.hmap-cell > rect")
@@ -662,8 +682,8 @@ function update_heatmap_svg() {
     .style("font-size", 30);
 
   var heatmap_labels = [
-    {text: "Input Vector", x: inputHeaderCX, y: ioHeaderBaseY},
-    {text: "Output Vector", x: outputHeaderCX, y: ioHeaderBaseY},
+    {text: "Input Vector (W)", x: inputHeaderCX, y: ioHeaderBaseY},
+    {text: "Output Vector (W')", x: outputHeaderCX, y: ioHeaderBaseY},
   ];
   hmap_svg
     .selectAll("text.hmap-matrix-label")
@@ -674,7 +694,7 @@ function update_heatmap_svg() {
     .attr("x", function(d){return d['x']})
     .attr("y", function(d){return d['y']})
     .text(function(d){return d['text']})
-    .style("font-size", 40)
+    .style("font-size", 30)
     .style("fill", "grey")
     .attr("text-anchor", "middle")
     .attr("alignment-baseline", "ideographic");
