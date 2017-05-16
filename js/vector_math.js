@@ -49,6 +49,8 @@ function feedforward(inputVectors, outputVectors, inputNeurons, hiddenNeurons, o
     }
   });
 
+  console.log('hiddenNeurons', hiddenNeurons)
+
   var outValueTemp = [];
   var sumExpNetInput = 0.0;  // denominator of softmax
   for (var i = 0; i < vocabSize; i++) {
@@ -102,7 +104,7 @@ function backpropagate(inputVectors, outputVectors, inputNeurons, hiddenNeurons,
   outputVectors.forEach(function(v, i) {  // i: vocab index (opposite to my paper's notations)
     v.forEach(function(e, j) {  // j: hidden layer index
       e['gradient'] = errors[i] * hiddenNeurons[j]['value'];
-      hiddenNeurons[j]['net_input_gradient'] += errors[i] * e['weight'];
+      hiddenNeurons[j]['net_input_gradient'] += errors[i] * e['weight']; 
     });
   });
 
@@ -133,13 +135,13 @@ function backpropagate(inputVectors, outputVectors, inputNeurons, hiddenNeurons,
 function apply_gradient(inputVectors, outputVectors, learning_rate) {
   inputVectors.forEach(function(v) {
     v.forEach(function(e) {
-      e['weight'] -= learning_rate * e['gradient'];
+      e['weight'] -= learning_rate * e['gradient']; // updated W
     });
   });
 
   outputVectors.forEach(function(v) {
     v.forEach(function(e) {
-      e['weight'] -= learning_rate * e['gradient'];
+      e['weight'] -= learning_rate * e['gradient']; // updated W'
     });
   });
 }

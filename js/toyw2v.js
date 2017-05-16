@@ -56,7 +56,8 @@ function load_config() {
 
 function set_default_training_data() {
   var presets = 
-    [{name:"Fruit and juice", data:"eat|apple,eat|orange,eat|rice,drink|juice,drink|milk,drink|water,orange|juice,apple|juice,rice|milk,milk|drink,water|drink,juice|drink"},
+    [{name:"Skills", data:"Java|JS,Java|CSS,JS|Java,JS|CSS,CSS|Java,CSS|JS,Java|HTML,Java|CSS,HTML|Java,HTML|CSS,CSS|Java,CSS|HTML,HTML|JS,HTML|PHP,JS|HTML,JS|PHP,PHP|HTML,PHP|JS,JS|Agile,Agile|JS,Java|CSS,CSS|Java,HTML|CSS,CSS|HTML"},
+     {name:"Fruit and juice", data:"eat|apple,eat|orange,eat|rice,drink|juice,drink|milk,drink|water,orange|juice,apple|juice,rice|milk,milk|drink,water|drink,juice|drink"},
      {name:"Fruit and juice (CBOW)", data: "drink^juice|apple,eat^apple|orange,drink^juice|rice,drink^milk|juice,drink^rice|milk,drink^milk|water,orange^apple|juice,apple^drink|juice,rice^drink|milk,milk^water|drink,water^juice|drink,juice^water|drink"},
      {name:"Fruit and juice (Skip-gram)", data: "apple|drink^juice,orange|eat^apple,rice|drink^juice,juice|drink^milk,milk|drink^rice,water|drink^milk,juice|orange^apple,juice|apple^drink,milk|rice^drink,drink|milk^water,drink|water^juice,drink|juice^water"},
      {name:"Self loop (5-point)", data:"A|A,B|B,C|C,D|D,E|E"},
@@ -145,12 +146,13 @@ function isCurrentTargetWord(w) {
 function activateNextInput() {
   current_input_idx = (current_input_idx + 1) % input_pairs.length;
   current_input = input_pairs[current_input_idx];
+  console.log('current_input', current_input, current_input_idx)
   inputNeurons.forEach(function(n, i) {
     n['value'] = isCurrentContextWord(n['word']) ? 1 : 0;
     n['always_excited'] = isCurrentContextWord(n['word']);
   });
-  do_feed_forward();  // model
-  update_neural_excite_value();  // visual
+  do_feed_forward();  // model * 
+  update_neural_excite_value();  // visual *
 }
 
 function deactivateCurrentInput() {
@@ -203,6 +205,8 @@ function setup_neural_net() {
     inputVectors.push(inVecTmp);
     outputVectors.push(outVecTmp);
   }
+
+  console.log('inputVectors', inputVectors)
 }
 
 function setup_neural_net_svg() {
@@ -272,7 +276,17 @@ function update_neural_net_svg() {
   inputNeuronElems
     .append("circle")
     .attr("cx", inputNeuronCX)
-    .attr("cy", function (d, i) {return ioNeuronCYMin + ioNeuronCYInt * i});
+    .attr("cy", function (d, i) {return ioNeuronCYMin + ioNeuronCYInt * i})
+
+      // inputNeuronElems.append("text")
+      // .attr("cx", inputNeuronCX)
+      // .attr("cy", function (d, i) {return ioNeuronCYMin + ioNeuronCYInt * i})
+      // .attr("x", inputNeuronCX - neuronLabelOffset)
+      // .attr("y", function (d, i) {return ioNeuronCYMin + ioNeuronCYInt * i})
+      // .text(function (d) {
+      //   console.log("xxxxxxxxx", d)
+      // });
+
 
   inputNeuronElems
     .append("text")
@@ -379,6 +393,49 @@ function update_neural_net_svg() {
           .style("stroke-width", "10");
       }
     });
+
+      var inputNeuronElems = nn_svg.selectAll("g.input-neuron");
+      var outNeuronElems = nn_svg.selectAll("g.output-neuron");
+      var hiddenNeuronElems = nn_svg.selectAll("g.hidden-neuron");
+
+          // Number in circle
+          inputNeuronElems.append("text")
+          .classed("cell_value_one_hot", true)
+          .attr("cx", inputNeuronCX)
+          .attr("cy", function (d, i) {return ioNeuronCYMin + ioNeuronCYInt * i})
+          .attr("x", inputNeuronCX - neuronLabelOffset + 18)
+          .attr("y", function (d, i) {return ioNeuronCYMin + ioNeuronCYInt * i + 4})
+          .text(function (d) {
+            return d.value
+          });
+          outNeuronElems.append("text")
+          .classed("cell_value_one_hot", true)
+          .attr("cx", outputNeuronCX)
+          .attr("cy", function (d, i) {return ioNeuronCYMin + ioNeuronCYInt * i})
+          .attr("x", outputNeuronCX - neuronLabelOffset + 18)
+          .attr("y", function (d, i) {return ioNeuronCYMin + ioNeuronCYInt * i + 30})
+          .text(function (d) {
+            return d.value.toFixed(2)
+          });
+          outNeuronElems.append("text")
+          .classed("cell_value_one_hot", true)
+          .attr("cx", hiddenNeuronCX)
+          .attr("cy", function (d, i) {return ioNeuronCYMin + ioNeuronCYInt * i})
+          .attr("x", outputNeuronCX - neuronLabelOffset + 18)
+          .attr("y", function (d, i) {return ioNeuronCYMin + ioNeuronCYInt * i + 5})
+          .text(function (d) {
+            return isCurrentTargetWord(d.word) ? 1 : 0;
+            // return d.value.toFixed(2)
+          });
+          hiddenNeuronElems.append("text")
+          .classed("cell_value_one_hot", true)
+          .attr("x", hiddenNeuronCX - neuronLabelOffset + 5)
+          .attr("y", function (d, i) {return hiddenNeuronCYMin + hiddenNeuronCYInt * i + 35})
+          .text(function (d) {
+            console.log(d)
+            // return isCurrentTargetWord(d.word) ? 1 : 0;
+            return d.value.toFixed(3)
+          });
   };
 
   // Set up hover behavior
@@ -435,6 +492,7 @@ function io_arrow_color() {
 
 function erase_input_output_arrows() {
   nn_svg.selectAll(".nn-io-arrow").remove();
+  nn_svg.selectAll(".cell_value_one_hot").remove();
 }
 
 // Helper function
@@ -460,6 +518,7 @@ function do_backpropagate() {
 // Helper function
 // Actual method implemented in vector_math.js
 function do_apply_gradients() {
+  console.log('do_apply_gradients', inputVectors, outputVectors, getCurrentLearningRate())
   apply_gradient(inputVectors, outputVectors, getCurrentLearningRate());
 }
 
@@ -475,6 +534,7 @@ function exciteValueToNum(x) {
 }
 
 function exciteValueToColor(x) {
+  // console.log(x)
   return numToColor(exciteValueToNum(x));
 }
 
@@ -555,6 +615,21 @@ function update_heatmap_svg() {
     .attr("y", function (d) {return ioCellBaseY + cellHeight * d['source']})
     .attr("width", cellFillWidth)
     .attr("height", cellFillHeight);
+
+    hmap_svg
+    .selectAll("g.hmap-input-cell > text").remove();
+
+    hmap_svg
+    .selectAll("g.hmap-input-cell")
+    .append("text")
+    .style("font-size","19px")
+    .attr("x", function (d) {return inputCellBaseX + cellWidth * d['target'] + 10})
+    .attr("y", function (d) {return ioCellBaseY + cellHeight * d['source'] + 50})
+    
+    .classed("matrix_number", true)
+    .text(function (d) {
+      return d.weight.toFixed(3)
+    });
 
   var outputWeightElems = hmap_svg
     .selectAll("g.hmap-output-cell")
@@ -767,8 +842,8 @@ function nextButtonClick() {
     update_heatmap_svg();
     update_scatterplot_svg();
   } else {
-    activateNextInput();
-    draw_input_output_arrows();
+    activateNextInput(); // *
+    draw_input_output_arrows(); // *
     do_backpropagate();  // compute gradients (without updating weights)
   }
 }
