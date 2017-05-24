@@ -10,6 +10,11 @@ $(document).ready(function() {
   $("#btn-next100").click(function(){batchTrain(100)});
   $("#btn-next500").click(function(){batchTrain(500)});
   $("#btn-learning-rate").click(function(){load_config()});
+  $("[name=show_number]").change(function(){
+      console.log($(this)[0].checked, 'on this')
+      if ($(this)[0].checked) $("#math_value").show();
+      else $("#math_value").hide();
+  });
 });
 
 function init() {
@@ -325,6 +330,7 @@ function update_neural_net_svg() {
     .attr("cx", hiddenNeuronCX)
     .attr("cy", function (d, i) {return hiddenNeuronCYMin + hiddenNeuronCYInt * i;});
 
+
   nn_svg.selectAll("g.neuron > circle")
     .attr("r", neuronRadius)
     .attr("stroke-width", "2")
@@ -438,7 +444,99 @@ function update_neural_net_svg() {
             // return isCurrentTargetWord(d.word) ? 1 : 0;
             return d.value.toFixed(3)
           });
+
+
+      draw_math_value();
   };
+
+  draw_math_value = function () {
+    var h = hiddenNeurons.map(function (node) {
+      return node.value.toFixed(2);
+    });
+    var y_hat = outputNeurons.map(function (node) {
+      return node.value.toFixed(2);
+    });
+    var expectedOutput = [];
+    outputNeurons.forEach(function(n) {
+      if (isCurrentTargetWord(n.word)) {
+        expectedOutput.push(1);
+      } else {
+        expectedOutput.push(0);
+      }
+    });
+
+    console.log(outputEdges, "outputEdges")
+
+    var html = "";
+
+    var table = "<table class='table'><tr><td>Hidden: h = xW = "
+      + h.join(", ") + "]</td></tr></table>";
+
+    html += table;
+
+    var table = "<table class='table'>"
+      + "<tr><td>Output: y^ = softmax(hW<sup>T</sup>)</td><td>[</td>";
+      for (var i in y_hat) {
+        table += "<td>"+ y_hat[i] +"</td>";
+      }
+      table += "<td>]</td></tr><tr><td>Expected Output: y</td><td>[</td>";
+      for (var i in expectedOutput) {
+        table += "<td>"+ expectedOutput[i] +"</td>";
+      }
+      table += "<td>]</td></tr>";
+
+      table += "</table>";
+
+    html += table;
+
+    html += "E = Cross-entropy (y^, y) ==> Minimum E <br /><br />";
+
+    html += "OutputNeurons: net_input = ["+ outputNeurons.map(function (node) {
+      return node.net_input.toFixed(3)
+    }).join(", ") +"] <br />";
+    html += "OutputNeurons: net_input_gradient = ["+ outputNeurons.map(function (node) {
+      return node.net_input_gradient ? node.net_input_gradient.toFixed(3) : 0;
+    }).join(", ") +"] <br /><br />";
+
+    html += "hiddenNeurons: value = ["+ hiddenNeurons.map(function (node) {
+      return node.value.toFixed(3)
+    }).join(", ") +"] <br />";
+    html += "hiddenNeurons: net_input_gradient = ["+ hiddenNeurons.map(function (node) {
+      return node.net_input_gradient ? node.net_input_gradient.toFixed(3) : 0;
+    }).join(", ") +"] <br /><br />";
+
+    console.log("inputVectors", inputVectors)
+
+
+    var isInputExcitedArray = [];
+    inputNeurons.forEach(function(n,i) {
+      if (n['value'] < 1e-5) {  // should be either 0 or 1
+        isInputExcitedArray.push(false);
+      } else {
+        isInputExcitedArray.push(true);
+      }
+    });
+    var hiddenSize = hiddenNeurons.length;
+  var vocabSize = inputNeurons.length;
+
+    W_gradient = []
+    for (var i = 0; i < vocabSize; i++) {
+      for (var j = 0; j < hiddenSize; j++) {
+        if (isInputExcitedArray[i])  {
+          W_gradient.push(inputVectors[i][j]['gradient']);
+        }
+      }
+    }
+
+    html += "W: gradient = ["+ W_gradient.map(function (node) {
+      return node ? node.toFixed(3) : 0;
+    }).join(", ") +"] <br />";
+
+    html += "<br /><br />";
+
+    $("#math_value").html(html);
+
+  }
 
   // Set up hover behavior
   d3.selectAll(".input-neuron > circle")
@@ -864,6 +962,7 @@ function nextButtonClick() {
   } else {
     activateNextInput(); // *
     draw_input_output_arrows(); // *
+    // draw_math_value(); // *
     do_backpropagate();  // compute gradients (without updating weights)
   }
 }
